@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Formulario con Validación</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <section class="card" aria-labelledby="form-title">
+      <h1 id="form-title">Crear cuenta</h1>
+
+      <form id="signupForm" novalidate>
+        <!-- Nombre -->
+        <div class="field">
+          <label for="name">Nombre <span class="req">*</span></label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="Tu nombre"
+            required
+            autocomplete="name"
+          />
+          <small class="error" id="nameError" aria-live="polite"></small>
+        </div>
+
+        <!-- Correo -->
+        <div class="field">
+          <label for="email">Correo <span class="req">*</span></label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="usuario@dominio.com"
+            required
+            autocomplete="email"
+            inputmode="email"
+          />
+          <small class="error" id="emailError" aria-live="polite"></small>
+        </div>
+
+        <!-- Contraseña -->
+        <div class="field">
+          <label for="password">Contraseña <span class="req">*</span></label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Mínimo 8 caracteres"
+            minlength="8"
+            required
+            autocomplete="new-password"
+          />
+          <div class="strength" aria-hidden="true">
+            <div id="strengthBar" class="bar"></div>
+          </div>
+          <small id="strengthText" class="hint" aria-live="polite">
+            La contraseña debe tener al menos 8 caracteres.
+          </small>
+          <small class="error" id="passwordError" aria-live="polite"></small>
+        </div>
+
+        <button type="submit" class="btn">Crear cuenta</button>
+        <p class="footnote">Campos con <span class="req">*</span> son obligatorios.</p>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    // Helpers
+    const byId = (id) => document.getElementById(id);
+
+    const nameInput = byId('name');
+    const emailInput = byId('email');
+    const passInput = byId('password');
+
+    const nameError = byId('nameError');
+    const emailError = byId('emailError');
+    const passwordError = byId('passwordError');
+
+    const strengthBar = byId('strengthBar');
+    const strengthText = byId('strengthText');
+    const form = byId('signupForm');
+
+    // Validación personalizada (mensajes claros)
+    function validateName() {
+      nameInput.setCustomValidity('');
+      nameError.textContent = '';
+      if (nameInput.validity.valueMissing) {
+        nameInput.setCustomValidity('Por favor, ingresa tu nombre.');
+        nameError.textContent = 'Por favor, ingresa tu nombre.';
+      }
+    }
+
+    function validateEmail() {
+      emailInput.setCustomValidity('');
+      emailError.textContent = '';
+      if (emailInput.validity.valueMissing) {
+        emailInput.setCustomValidity('El correo es obligatorio.');
+        emailError.textContent = 'El correo es obligatorio.';
+      } else if (emailInput.validity.typeMismatch) {
+        emailInput.setCustomValidity('Usa un formato válido: usuario@dominio.com');
+        emailError.textContent = 'Usa un formato válido: usuario@dominio.com';
+      }
+    }
+
+    function passwordScore(pwd) {
+      let score = 0;
+      if (!pwd) return 0;
+      // Reglas
+      if (pwd.length >= 8) score++;
+      if (pwd.length >= 12) score++; // bonus por longitud
+      if (/[a-z]/.test(pwd)) score++;
+      if (/[A-Z]/.test(pwd)) score++;
+      if (/\d/.test(pwd)) score++;
+      if (/[^A-Za-z0-9]/.test(pwd)) score++;
+      // Normalizamos a 0–5
+      return Math.min(score, 5);
+    }
+
+    function updateStrength(pwd) {
+      const score = passwordScore(pwd);
+      const pct = [0, 20, 40, 60, 80, 100][score];
+      strengthBar.style.width = pct + '%';
+      strengthBar.classList.remove('weak', 'medium', 'strong');
+
+      let label = '';
+      if (score <= 1) { strengthBar.classList.add('weak'); label = 'Muy débil'; }
+      else if (score <= 3) { strengthBar.classList.add('medium'); label = 'Media'; }
+      else { strengthBar.classList.add('strong'); label = 'Fuerte'; }
+
+      strengthText.textContent =
+        pwd.length === 0
+          ? 'La contraseña debe tener al menos 8 caracteres.'
+          : `Fuerza: ${label}`;
+    }
+
+    function validatePassword() {
+      passInput.setCustomValidity('');
+      passwordError.textContent = '';
+      if (passInput.validity.valueMissing) {
+        passInput.setCustomValidity('La contraseña es obligatoria.');
+        passwordError.textContent = 'La contraseña es obligatoria.';
+      } else if (passInput.value.length < 8) {
+        passInput.setCustomValidity('Mínimo 8 caracteres.');
+        passwordError.textContent = 'Mínimo 8 caracteres.';
+      }
+    }
+
+    // Eventos
+    nameInput.addEventListener('input', validateName);
+    emailInput.addEventListener('input', validateEmail);
+    passInput.addEventListener('input', () => {
+      updateStrength(passInput.value);
+      validatePassword();
+    });
+
+    form.addEventListener('submit', (e) => {
+      validateName();
+      validateEmail();
+      validatePassword();
+
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        form.reportValidity();
+        return;
+      }
+
+      e.preventDefault(); // demo: evita navegación
+      alert('Formulario enviado (demo).');
+      form.reset();
+      updateStrength('');
+    });
+
+    // Estado inicial
+    updateStrength('');
+  </script>
+</body>
+</html>
